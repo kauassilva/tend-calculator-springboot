@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: tend-calculator
+  output:
+    ansi:
+      enabled: ALWAYS
