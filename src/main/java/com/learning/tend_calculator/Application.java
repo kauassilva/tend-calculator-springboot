@@ -14,8 +14,12 @@ import java.util.Scanner;
 
 @SpringBootApplication
 public class Application {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
+
+    public static final String RESET = "\033[0m";
+    public static final String GREEN_BOLD = "\033[1;32m";
+    public static final String RED_BOLD = "\033[1;31m";
+    public static final String BLUE_BOLD = "\033[1;34m";
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -24,28 +28,27 @@ public class Application {
 	@Bean
 	CommandLineRunner cli(LimitCalculator calculator) {
 		return args -> {
-			LOGGER.info("Inicializando CLI de Tend Calculator");
-			System.out.println("\n---- Tend Calculator (digite 'sair' para encerrar) ----");
+			System.out.println(BLUE_BOLD + "\n---- Calculadora de Limites (digite 'sair' ou 'exit' para encerrar) ----" + RESET);
 			System.out.println("Informe primeiro o valor para o qual x tende (ex: 0, 2, inf, -inf) e depois a função f(x).");
+            System.out.println("Exemplo:");
+            System.out.println("X tende a> 0");
+            System.out.println("Função f(x)> (x^2 - 1)/(x - 1)");
 			Scanner scanner = new Scanner(System.in);
 
 			while (true) {
-				System.out.print("\nX -> ");
+				System.out.print(GREEN_BOLD + "\nX tende a> " + RESET);
 
-				if (!scanner.hasNextLine()) {
-					LOGGER.info("EOF detectado, encerrando CLI");
+				if (!scanner.hasNextLine())
 					break;
-				}
 
 				String pointStr = scanner.nextLine().trim();
 
 				if (pointStr.equalsIgnoreCase("sair") || pointStr.equalsIgnoreCase("exit")) {
-					LOGGER.info("Comando de saída recebido");
-					System.out.println("Encerrando...");
+					System.out.println("Encerrando.");
 					break;
 				}
 				if (pointStr.isEmpty()) {
-					System.out.println("Valor inválido. Tente novamente.");
+					System.out.println(RED_BOLD + "Valor inválido. Tente novamente." + RESET);
 					continue;
 				}
 
@@ -56,17 +59,14 @@ public class Application {
 					continue;
 				}
 
-				System.out.print("lim ()> ");
+				System.out.print("Função f(x)> ");
 
-				if (!scanner.hasNextLine()) {
-					LOGGER.info("EOF após ponto, encerrando CLI");
+				if (!scanner.hasNextLine())
 					break;
-				}
 
 				String expressionStr = scanner.nextLine().trim();
 
 				if (expressionStr.equalsIgnoreCase("sair") || expressionStr.equalsIgnoreCase("exit")) {
-					LOGGER.info("Comando de saída recebido");
 					System.out.println("Encerrando...");
 					break;
 				}
@@ -78,16 +78,12 @@ public class Application {
 				LimitContext context = LimitContext.at(pointStr);
 
 				try {
-					LOGGER.debug("Calculando limite: expressao='{}' ponto='{}'", expressionStr, pointStr);
 					LimitResult result = calculator.computeLimit(expressionStr, context);
 					System.out.println(result.format());
 				} catch (Exception e) {
-					LOGGER.error("Erro ao calcular limite para expressao='{}' ponto='{}'", expressionStr, pointStr);
 					System.out.println("Erro ao calcular: " + e.getMessage());
 				}
 			}
-
-			LOGGER.info("CLI finalizada");
 		};
 	}
 
@@ -100,9 +96,8 @@ public class Application {
 	}
 
 	private Double parsePoint(String s) {
-		if (isInfinity(s)) {
+		if (isInfinity(s))
 			return null;
-		}
 
 		try {
 			return Double.parseDouble(s);
@@ -110,5 +105,4 @@ public class Application {
 			return null;
 		}
 	}
-
 }
