@@ -31,62 +31,53 @@ public class LimitCalculator {
 
     private LimitResult limitAtFinite(Expression expression, LimitContext context, List<String> steps) {
         Double a = context.getPoint();
-        Double direct = expression.evaluate(a);
+        LimitResult directResult = tryDirectSubstitution(expression, a, steps);
 
-        if (!Double.isNaN(direct) && !Double.isInfinite(direct)) {
-            steps.add("Substituição direta bem sucedida");
-            return LimitResult.finite(direct, steps);
-        } else {
-            steps.add("Substituição direta indeterminada, inciando aproximação numérica");
+        if (directResult != null) {
+            return directResult;
         }
 
-        double prevLeft = Double.NaN, prevRight = Double.NaN;
-        double leftVal = Double.NaN, rightVal = Double.NaN;
+        steps.add("Substituição direta indeterminada, inciando aproximação numérica");
+        return approximateByLateralLimits(expression, a, context, steps);
+    }
+
+    private LimitResult approximateByLateralLimits(Expression expression, Double point, LimitContext context, List<String> steps) {
+        LateralApproximation approx = new LateralApproximation();
         double delta = 1e-1;
-        int stableCount = 0;
 
         for (int i = 0; i <context.getMaxInteration(); i++) {
-            double xLeft = a - delta;
-            double xRight = a + delta;
-            leftVal = expression.evaluate(xLeft);
-            rightVal = expression.evaluate(xRight);
+            double leftVal = expression.evaluate(point - delta);
+            double rightVal = expression.evaluate(point + delta);
 
-            if (Double.isNaN(leftVal) || Double.isNaN(rightVal)) {
+            if (hasNaNValues(leftVal, rightVal)) {
                 delta /= 2;
                 continue;
             }
-            if (Double.isInfinite(leftVal) && Double.isInfinite(rightVal)) {
-                return leftVal > 0 ? LimitResult.positiveInfinite(steps) : LimitResult.negativeInfinite(steps);
-            }
-            if (!Double.isNaN(prevLeft) && !Double.isNaN(prevRight)) {
-                double diffLeft = Math.abs(leftVal - prevLeft);
-                double diffRight = Math.abs(rightVal - prevRight);
-                double diffSides = Math.abs(leftVal - rightVal);
 
-                if (diffSides < context.getEpsilon() && diffLeft < context.getEpsilon() && diffRight < context.getEpsilon()) {
-                    stableCount++;
-                } else {
-                    stableCount = 0;
-                }
-                if (stableCount >= 3) {
-                    double result = (leftVal + rightVal) / 2.0;
-                    steps.add("Convergência numérica alcançada com delta=" + delta);
-                    return LimitResult.finite(result, steps);
-                }
-                if (i > 5 && diffSides > 1 && Math.signum(leftVal) != Math.signum(rightVal)) {
-                    steps.add("Valores laterais divergem em sinal após iterações");
-                    return LimitResult.differentSides(steps);
+            LimitResult infinityResult = checkBothSidesInfinite(leftVal, rightVal, steps);
+            if (infinityResult != null) {
+                return infinityResult;
+            }
+
+            if (approx.hasPreviousValues()) {
+                LimitResult convergenceResult = checkLateralConvergence(leftVal, rightVal, approx, delta, context, i, steps);
+
+                if (convergenceResult != null) {
+                    return convergenceResult;
                 }
             }
 
-            prevLeft = leftVal;
-            prevRight = rightVal;
+            approx.update(leftVal, rightVal);
             delta /= 2.0;
         }
 
-        // verificar oscilacao simples
-        if (Double.isNaN(leftVal) || Double.isNaN(rightVal))
+        return handleNonConvergence(approx.getLeftVal(), approx.getRightVal(), steps);
+    }
+
+    private LimitResult handleNonConvergence(double leftVal, double rightVal, List<String> steps) {
+        if (Double.isNaN(leftVal) || Double.isNaN(rightVal)) {
             return LimitResult.undetermined(steps);
+        }
         if (Math.abs(leftVal - rightVal) > 1e-2) {
             steps.add("Não houve convergência bilateral");
             return LimitResult.differentSides(steps);
@@ -96,38 +87,180 @@ public class LimitCalculator {
         return LimitResult.finite(avg, steps);
     }
 
+    private LimitResult checkLateralConvergence(double leftVal, double rightVal, LateralApproximation approx, double delta, LimitContext context, int iteration, List<String> steps) {
+        double diffLeft = Math.abs(leftVal - approx.getPrevLeft());
+        double diffRight = Math.abs(rightVal - approx.getPrevRight());
+        double diffSides = Math.abs(leftVal - rightVal);
+
+        if (allDifferencesAreSmall(diffLeft, diffRight, diffSides, context.getEpsilon())) {
+            approx.incrementStableCount();
+        } else {
+            approx.resetStableCount();
+        }
+
+        if (approx.isStable()) {
+            double result = (leftVal + rightVal) / 2.0;
+            steps.add("Convergência numérica alcançada com delta=" + delta);
+            return LimitResult.finite(result, steps);
+        }
+        if (sidesHaveDivergedInSign(iteration, diffSides, leftVal, rightVal)) {
+            steps.add("Valores laterais divergem em sinal após iterações");
+            return LimitResult.differentSides(steps);
+        }
+
+        return null;
+    }
+
+    private boolean sidesHaveDivergedInSign(int iteration, double diffSides, double leftVal, double rightVal) {
+        return iteration > 5 && diffSides > 1 && Math.signum(leftVal) != Math.signum(rightVal);
+    }
+
+    private boolean allDifferencesAreSmall(double diffLeft, double diffRight, double diffSides, Double epsilon) {
+        return diffSides < epsilon && diffLeft < epsilon && diffRight < epsilon;
+    }
+
+    private LimitResult checkBothSidesInfinite(double leftVal, double rightVal, List<String> steps) {
+        if (Double.isInfinite(leftVal) && Double.isInfinite(rightVal)) {
+            return leftVal > 0 ? LimitResult.positiveInfinite(steps) : LimitResult.negativeInfinite(steps);
+        }
+        return null;
+    }
+
+    private boolean hasNaNValues(double leftVal, double rightVal) {
+        return Double.isNaN(leftVal) && Double.isNaN(rightVal);
+    }
+
+    private LimitResult tryDirectSubstitution(Expression expression, Double a, List<String> steps) {
+        Double direct = expression.evaluate(a);
+
+        if (!Double.isNaN(direct) && !Double.isInfinite(direct)) {
+            steps.add("Substituição direta bem sucedida");
+            return LimitResult.finite(direct, steps);
+        }
+
+        return null;
+    }
+
     private LimitResult limitAtInfinity(Expression expression, LimitContext context, List<String> steps) {
         steps.add("Aproximação numérica para infinito");
-        double x = context.getToPositiveInfinity() ? 10 : -10;
+        double x = getInitialValueForInfinity(context);
         double prev = Double.NaN;
 
         for (int i = 0; i <context.getMaxInteration(); i++) {
             Double val = expression.evaluate(x);
 
             if (Double.isNaN(val)) {
-                x = context.getToPositiveInfinity() ? x * 2 : x * 2;
+                x = doubleXMagnitude(x);
                 continue;
             }
-            if (Double.isInfinite(val)) {
-                return val > 0 ? LimitResult.positiveInfinite(steps) : LimitResult.negativeInfinite(steps);
+
+            LimitResult infinityResult = checkIfInfinity(val, steps);
+
+            if (infinityResult != null) {
+                return infinityResult;
             }
             if (!Double.isNaN(prev)) {
-                double diff = Math.abs(val - prev);
+                LimitResult convergenceResult = checkConvergence(val, prev, x, context, steps);
 
-                if (diff < context.getEpsilon()) {
-                    steps.add("Convergência detectada em x=" + x);
-                    return LimitResult.finite(val, steps);
-                }
-                if (Math.abs(val) > 1e6 && Math.abs(prev) > 1e6) {
-                    return val > 0 ? LimitResult.positiveInfinite(steps) : LimitResult.negativeInfinite(steps);
+                if (convergenceResult != null) {
+                    return convergenceResult;
                 }
             }
 
             prev = val;
-            x = context.getToPositiveInfinity() ? x * 2 : x * 2; // dobra magnitude
+            x = doubleXMagnitude(x);
         }
 
         return LimitResult.undetermined(steps);
+    }
+
+    private LimitResult checkConvergence(Double currentVal, double prevVal, double x, LimitContext context, List<String> steps) {
+        double diff = Math.abs(currentVal - prevVal);
+
+        if (hasConverged(diff, context.getEpsilon())) {
+            steps.add("Convergência detectada em x=" + x);
+            return LimitResult.finite(currentVal, steps);
+        }
+        if (isTendingToInfinity(currentVal, prevVal)) {
+            return currentVal > 0 ? LimitResult.positiveInfinite(steps) : LimitResult.negativeInfinite(steps);
+        }
+
+        return null;
+    }
+
+    private boolean isTendingToInfinity(Double currentVal, double prevVal) {
+        return Math.abs(currentVal) > 1e6 && Math.abs(prevVal) > 1e6;
+    }
+
+    private boolean hasConverged(double difference, Double epsilon) {
+        return difference < epsilon;
+    }
+
+    private LimitResult checkIfInfinity(Double value, List<String> steps) {
+        if (Double.isInfinite(value)) {
+            return value > 0 ? LimitResult.positiveInfinite(steps) : LimitResult.negativeInfinite(steps);
+        }
+
+        return null;
+    }
+
+    private double doubleXMagnitude(double x) {
+        return x * 2;
+    }
+
+    private double getInitialValueForInfinity(LimitContext context) {
+        return context.getToPositiveInfinity() ? 10 : -10;
+    }
+
+    private static class LateralApproximation {
+        private double prevLeft = Double.NaN;
+        private double prevRight = Double.NaN;
+        private double leftVal = Double.NaN;
+        private double rightVal = Double.NaN;
+        private int stableCount = 0;
+
+        boolean hasPreviousValues() {
+            return !Double.isNaN(prevLeft) && !Double.isNaN(prevRight);
+        }
+
+        void update(double left, double right) {
+            this.prevLeft = this.leftVal;
+            this.prevRight = this.rightVal;
+            this.leftVal = left;
+            this.rightVal = right;
+        }
+
+        void incrementStableCount() {
+            stableCount++;
+        }
+
+        void resetStableCount() {
+            stableCount = 0;
+        }
+
+        boolean isStable() {
+            return stableCount >= 3;
+        }
+
+        public double getPrevLeft() {
+            return prevLeft;
+        }
+
+        public double getPrevRight() {
+            return prevRight;
+        }
+
+        public double getLeftVal() {
+            return leftVal;
+        }
+
+        public double getRightVal() {
+            return rightVal;
+        }
+
+        public int getStableCount() {
+            return stableCount;
+        }
     }
 
 }

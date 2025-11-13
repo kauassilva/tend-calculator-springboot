@@ -8,7 +8,7 @@ import static com.learning.tend_calculator.parse.TokenType.ADD;
 
 public class ExpressionParser {
 
-    private static final Set<String> FUNCTIONS = Set.of("sen", "cos", "tg", "exp", "log", "abs");
+    private static final Set<String> FUNCTIONS = Set.of("sen", "cos", "tg", "exp", "log", "abs", "sqrt", "cbrt");
 
     public Expression parse(String input) {
         String cleaned = input.replace(" ", "");
@@ -53,6 +53,9 @@ public class ExpressionParser {
                     output.add(new Token(ADD, "+"));
                     break;
                 case '-':
+                    if (output.isEmpty() || isOperatorOrLParen(output.get(output.size() - 1).type())) {
+                        output.add(new Token(TokenType.NUMBER, "0"));
+                    }
                     output.add(new Token(TokenType.SUBTRACT, "-"));
                     break;
                 case '*':
@@ -78,6 +81,13 @@ public class ExpressionParser {
         }
 
         return output;
+    }
+
+    private boolean isOperatorOrLParen(TokenType tokenType) {
+        return switch (tokenType) {
+            case ADD, SUBTRACT, MULTIPLY, DIVIDE, POWER, LEFT_PARENTHESES -> true;
+            default -> false;
+        };
     }
 
     // Shunting Yard
@@ -149,6 +159,10 @@ public class ExpressionParser {
         return outStack.pop();
     }
 
+    private boolean isFunction(String text) {
+        return FUNCTIONS.contains(text.toLowerCase());
+    }
+
     private void popOperator(Deque<Token> opStack, Deque<Expression> outStack) {
         Token op = opStack.pop();
 
@@ -177,10 +191,6 @@ public class ExpressionParser {
             case ADD, SUBTRACT -> 2;
             default -> 0;
         };
-    }
-
-    private boolean isFunction(String text) {
-        return FUNCTIONS.contains(text.toLowerCase());
     }
 
 }
