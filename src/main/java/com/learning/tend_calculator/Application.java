@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 import java.util.Scanner;
@@ -26,6 +27,7 @@ public class Application {
 	}
 
 	@Bean
+    @ConditionalOnProperty(name = "cli.enbled", havingValue = "true")
 	CommandLineRunner cli(LimitCalculator calculator) {
 		return args -> {
 			System.out.println(BLUE_BOLD + "\n---- Calculadora de Limites (digite 'sair' ou 'exit' para encerrar) ----" + RESET);

@@ -25,6 +25,8 @@ public class FunctionCall implements Expression {
             case "exp" -> Math.exp(value);
             case "log" -> Math.log(value);
             case "abs" -> Math.abs(value);
+            case "sqrt" -> Math.sqrt(value);
+            case "cbrt" -> Math.cbrt(value);
             default -> Double.NaN;
         };
     }
