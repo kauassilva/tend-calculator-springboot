@@ -29,9 +29,9 @@ public class Application {
 	CommandLineRunner cli(LimitCalculatorService calculator) {
 		return args -> {
 			System.out.println(BLUE_BOLD + "\n---- Calculadora de Limites (digite 'sair' ou 'exit' para encerrar) ----" + RESET);
-			System.out.println("Informe primeiro o valor para o qual x tende (ex: 0, 2, inf, -inf) e depois a função f(x).");
+			System.out.println("Informe primeiro o valor para o qual x tende (ex: 0, 2) e depois a função f(x).");
             System.out.println("Exemplo:");
-            System.out.println("X -> 0");
+            System.out.println("x -> 0");
             System.out.println("Função f(x)> (x^2 - 1)/(x - 1)");
 			Scanner scanner = new Scanner(System.in);
 
@@ -53,7 +53,7 @@ public class Application {
 					continue;
 				}
 
-				System.out.print("Função f(x)> ");
+				System.out.print(GREEN_BOLD +"Função f(x)> " + RESET);
 
 				if (!scanner.hasNextLine())
 					break;

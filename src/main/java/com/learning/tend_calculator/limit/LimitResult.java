@@ -40,7 +40,7 @@ public final class LimitResult {
         }
 
         if (!steps.isEmpty()) {
-            stringBuilder.append("\nPassos:");
+            stringBuilder.append("\nAnálises:");
             StringJoiner joiner = new StringJoiner("\n - ");
             steps.forEach(joiner::add);
             stringBuilder.append("\n - ").append(joiner);
