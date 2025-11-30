@@ -1,6 +1,7 @@
 # Tend Calculator
 
 Uma aplicação Java que calcula limites de funções de uma variável utilizando a biblioteca Symja para avaliação simbólica.
+Link para uma [apresentação do projeto](https://www.canva.com/design/DAG6NFtdW34/twADoa_lVSRwo3sAUvDm3w/edit?utm_content=DAG6NFtdW34&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton).
 
 ## Requisitos
 - Java 21 (definido no `pom.xml`)
