@@ -59,6 +59,7 @@ public class Application {
 					break;
 
 				String expressionStr = scanner.nextLine().trim();
+                expressionStr = expressionStr.replaceAll("X", "x");
 
                 if (isExitInput(expressionStr)) break;
                 if (isEmptyInput(expressionStr)) continue;

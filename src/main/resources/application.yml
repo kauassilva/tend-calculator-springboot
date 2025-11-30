@@ -15,6 +15,3 @@ logging:
 
 cli:
   enabled: true
-
-symja:
-  enabled: true

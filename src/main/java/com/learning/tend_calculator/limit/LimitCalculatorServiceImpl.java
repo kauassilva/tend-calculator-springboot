@@ -1,49 +1,22 @@
 package com.learning.tend_calculator.limit;
 
-import com.learning.tend_calculator.parse.ExpressionParser;
-import com.learning.tend_calculator.expression.Expression;
 import org.matheclipse.core.eval.ExprEvaluator;
 import org.matheclipse.core.interfaces.IExpr;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@ConditionalOnProperty(name = "symja.enabled", havingValue = "true")
-public class LimitCalculatorSymjaService implements LimitCalculatorService {
+public class LimitCalculatorServiceImpl implements LimitCalculatorService {
 
     private final ExprEvaluator evaluator = new ExprEvaluator();
-    private final ExpressionParser parser = new ExpressionParser();
+    private final List<String> steps = new ArrayList<>();
 
     @Override
     public LimitResult computeLimit(String expressionStr, LimitContext context) {
-        List<String> steps = new ArrayList<>();
-
-        // First try direct substitution using existing parser (to detect indeterminate)
-        boolean directTried = false;
-        if (!context.isInfinity()) {
-            directTried = true;
-            try {
-                Expression expression = parser.parse(expressionStr);
-                Double val = expression.evaluate(context.getPoint());
-                if (val != null && !Double.isNaN(val) && !Double.isInfinite(val)) {
-                    // direct substitution succeeded -> return it
-                    steps.add("Parser OK");
-                    steps.add("Substituição direta bem sucedida");
-                    return LimitResult.finite(val, steps);
-                } else {
-                    // mark that direct substitution was indeterminate and proceed to Symja
-                    steps.add("Substituição direta indeterminada");
-                }
-            } catch (Exception e) {
-                // parsing/evaluation failed -> mark as indeterminate
-                steps.add("Substituição direta indeterminada");
-            }
-        }
-
         // Use Symja for symbolic evaluation
+        steps.clear();
         steps.add("Using Symja engine");
         try {
             String pointSpec = buildPointSpec(context);
@@ -104,7 +77,7 @@ public class LimitCalculatorSymjaService implements LimitCalculatorService {
         } else {
             Double point = context.getPoint();
             if (point == null) return "x->0";
-            if (point.longValue() == point.doubleValue()) {
+            if (point.longValue() == point) {
                 return "x->" + point.longValue();
             }
             return "x->" + point;
@@ -132,7 +105,9 @@ public class LimitCalculatorSymjaService implements LimitCalculatorService {
             try {
                 double num = Double.parseDouble(parts[0].trim());
                 double den = Double.parseDouble(parts[1].trim());
-                return num / den;
+                double res = num / den;
+                steps.add("Numeric result: " + res);
+                return res;
             } catch (NumberFormatException ignored) {
             }
         }
@@ -141,6 +116,7 @@ public class LimitCalculatorSymjaService implements LimitCalculatorService {
         try {
             IExpr n = evaluator.eval("N(" + s + ")");
             String nr = n.toString().trim();
+            steps.add("Numeric result: " + nr);
             return Double.parseDouble(nr);
         } catch (Exception ignored) {
         }

@@ -19,12 +19,12 @@ public final class LimitResult {
 
     public String format() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Resultado: ");
+        stringBuilder.append("\nResultado: ");
 
         switch (type) {
             case FINITE -> {
                 if (representation != null) {
-                    stringBuilder.append(representation);
+                    stringBuilder.append(representation).append(" ou ").append(value);
                 } else if (value != null) {
                     stringBuilder.append(value);
                 } else {
@@ -49,28 +49,8 @@ public final class LimitResult {
         return stringBuilder.toString();
     }
 
-    public static LimitResult finite(double value, List<String> steps) {
-        return new LimitResult(LimitType.FINITE, value, null, steps);
-    }
-
     public static LimitResult finite(Double value, String representation, List<String> steps) {
         return new LimitResult(LimitType.FINITE, value, representation, steps);
-    }
-
-    public static LimitResult positiveInfinite(List<String> steps) {
-        return new LimitResult(LimitType.POSITIVE_INFINITY, null, null, steps);
-    }
-
-    public static LimitResult negativeInfinite(List<String> steps) {
-        return new LimitResult(LimitType.NEGATIVE_INFINITY, null, null, steps);
-    }
-
-    public static LimitResult oscillatory(List<String> steps) {
-        return new LimitResult(LimitType.DOES_NOT_EXIST_OSCILLATORY, null, null, steps);
-    }
-
-    public static LimitResult differentSides(List<String> steps) {
-        return new LimitResult(LimitType.DOES_NOT_EXIST_DIFFERENT_ONE_SIDED, null, null, steps);
     }
 
     public static LimitResult undetermined(List<String> steps) {
@@ -87,13 +67,5 @@ public final class LimitResult {
 
     public Double getValue() {
         return value;
-    }
-
-    public String getRepresentation() {
-        return representation;
-    }
-
-    public List<String> getSteps() {
-        return steps;
     }
 }
