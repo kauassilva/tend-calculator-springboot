@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.6</version>
+		<version>3.5.8</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.learning</groupId>
@@ -40,6 +40,12 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+        <dependency>
+            <groupId>org.matheclipse</groupId>
+            <artifactId>matheclipse-core</artifactId>
+            <version>3.0.0</version>
+        </dependency>
 	</dependencies>
 
 	<build>

@@ -5,15 +5,15 @@ public final class LimitContext {
     public enum Direction {TWO_SIDED, LEFT, RIGHT}
 
     private final Double point; // null if infinity
-    private final Boolean toPositiveInfinity;
-    private final Boolean toNegativeInfinity;
+    private final boolean toPositiveInfinity;
+    private final boolean toNegativeInfinity;
     private final Direction direction;
     private final Double epsilon;
     private final Integer maxInteration;
 
     private LimitContext(Double point,
-                        Boolean toPositiveInfinity,
-                        Boolean toNegativeInfinity,
+                        boolean toPositiveInfinity,
+                        boolean toNegativeInfinity,
                         Direction direction,
                         Double epsilon,
                         Integer maxInteration) {
@@ -46,11 +46,11 @@ public final class LimitContext {
         return point;
     }
 
-    public Boolean getToPositiveInfinity() {
+    public boolean getToPositiveInfinity() {
         return toPositiveInfinity;
     }
 
-    public Boolean getToNegativeInfinity() {
+    public boolean getToNegativeInfinity() {
         return toNegativeInfinity;
     }
 
