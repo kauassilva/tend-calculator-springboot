@@ -7,11 +7,13 @@ public final class LimitResult {
 
     private final LimitType type;
     private final Double value; // apenas se FINITE
+    private final String representation; // optional symbolic representation (e.g. "9/4")
     private final List<String> steps;
 
-    public LimitResult(LimitType type, Double value, List<String> steps) {
+    public LimitResult(LimitType type, Double value, String representation, List<String> steps) {
         this.type = type;
         this.value = value;
+        this.representation = representation;
         this.steps = steps;
     }
 
@@ -20,7 +22,15 @@ public final class LimitResult {
         stringBuilder.append("Resultado: ");
 
         switch (type) {
-            case FINITE -> stringBuilder.append(value);
+            case FINITE -> {
+                if (representation != null) {
+                    stringBuilder.append(representation);
+                } else if (value != null) {
+                    stringBuilder.append(value);
+                } else {
+                    stringBuilder.append("Indeterminado");
+                }
+            }
             case POSITIVE_INFINITY -> stringBuilder.append("+∞");
             case NEGATIVE_INFINITY -> stringBuilder.append("-∞");
             case DOES_NOT_EXIST_OSCILLATORY -> stringBuilder.append("Não existe (oscilatório)");
@@ -40,31 +50,35 @@ public final class LimitResult {
     }
 
     public static LimitResult finite(double value, List<String> steps) {
-        return new LimitResult(LimitType.FINITE, value, steps);
+        return new LimitResult(LimitType.FINITE, value, null, steps);
+    }
+
+    public static LimitResult finite(Double value, String representation, List<String> steps) {
+        return new LimitResult(LimitType.FINITE, value, representation, steps);
     }
 
     public static LimitResult positiveInfinite(List<String> steps) {
-        return new LimitResult(LimitType.POSITIVE_INFINITY, null, steps);
+        return new LimitResult(LimitType.POSITIVE_INFINITY, null, null, steps);
     }
 
     public static LimitResult negativeInfinite(List<String> steps) {
-        return new LimitResult(LimitType.NEGATIVE_INFINITY, null, steps);
+        return new LimitResult(LimitType.NEGATIVE_INFINITY, null, null, steps);
     }
 
     public static LimitResult oscillatory(List<String> steps) {
-        return new LimitResult(LimitType.DOES_NOT_EXIST_OSCILLATORY, null, steps);
+        return new LimitResult(LimitType.DOES_NOT_EXIST_OSCILLATORY, null, null, steps);
     }
 
     public static LimitResult differentSides(List<String> steps) {
-        return new LimitResult(LimitType.DOES_NOT_EXIST_DIFFERENT_ONE_SIDED, null, steps);
+        return new LimitResult(LimitType.DOES_NOT_EXIST_DIFFERENT_ONE_SIDED, null, null, steps);
     }
 
     public static LimitResult undetermined(List<String> steps) {
-        return new LimitResult(LimitType.UNDETERMINED, null, steps);
+        return new LimitResult(LimitType.UNDETERMINED, null, null, steps);
     }
 
     public static LimitResult error(String message) {
-        return new LimitResult(LimitType.ERROR, null, List.of(message));
+        return new LimitResult(LimitType.ERROR, null, null, List.of(message));
     }
 
     public LimitType getType() {
@@ -73,6 +87,10 @@ public final class LimitResult {
 
     public Double getValue() {
         return value;
+    }
+
+    public String getRepresentation() {
+        return representation;
     }
 
     public List<String> getSteps() {
